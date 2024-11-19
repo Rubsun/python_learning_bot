@@ -1,8 +1,6 @@
-from aiogram.fsm.context import FSMContext
-
-
 from aiogram import types
 from aiogram.filters.command import Command
+from aiogram.fsm.context import FSMContext
 
 from src.handlers.admin_handlers.command.router import router
 from src.states.create_task import CreateTaskState

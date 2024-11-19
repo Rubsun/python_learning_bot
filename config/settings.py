@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    BOT_WEBHOOK_URL: str | None
+
     BOT_TOKEN: str
 
     DB_HOST: str

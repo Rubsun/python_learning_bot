@@ -2,8 +2,8 @@ import aio_pika
 import msgpack
 from aio_pika import ExchangeType
 from aiogram import F
-from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
+from aiogram.types import Message, CallbackQuery
 
 from consumer.schema.task import TaskMessage
 from db.storage.rabbit import channel_pool
@@ -26,9 +26,7 @@ async def get_complexity(callback: CallbackQuery):
             aio_pika.Message(
                 msgpack.packb(
                     TaskMessage(
-                        user_id=callback.from_user.id,
-                        action=f'get_tasks_by_complexity:{complexity}',
-                        event='tasks'
+                        user_id=callback.from_user.id, action=f'get_tasks_by_complexity:{complexity}', event='tasks'
                     )
                 ),
             ),

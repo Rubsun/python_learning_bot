@@ -1,11 +1,10 @@
 from aio_pika import ExchangeType
+from aiogram.filters.command import CommandStart
+from aiogram.types import Message
 
+from config.settings import settings
 from db.storage.rabbit import channel_pool
 from src.handlers.user_handlers.command.router import router
-from aiogram.types import Message
-from aiogram.filters.command import CommandStart
-from config.settings import settings
-
 from src.keyboards.user_kb import start_kb
 
 
@@ -42,4 +41,3 @@ async def start_handler(message: Message):
     )
 
     await message.answer(txt, reply_markup=start_kb, parse_mode='HTML')
-

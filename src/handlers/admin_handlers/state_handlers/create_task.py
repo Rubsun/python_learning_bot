@@ -14,7 +14,6 @@ from src.keyboards.admin_kb import admin_complex_kb
 from src.states.create_task import CreateTaskState
 
 
-
 @router.message(CreateTaskState.waiting_for_title)
 async def waiting_for_title(message: Message, state: FSMContext):
     title = message.text
@@ -29,6 +28,7 @@ async def waiting_for_description(message: Message, state: FSMContext):
     await state.update_data(description=description)
     await message.answer('Выберите <b>сложность задачи</b>', parse_mode='HTML', reply_markup=admin_complex_kb)
 
+
 @router.callback_query(F.data.startswith('admin_complexity_'))
 async def choose_complexity(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete_reply_markup()
@@ -38,6 +38,7 @@ async def choose_complexity(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer('Введите <b>исходные данные</b> для задачи', parse_mode='HTML')
     await state.set_state(CreateTaskState.waiting_for_input_data)
 
+
 @router.message(CreateTaskState.waiting_for_input_data)
 async def waiting_for_input_data(message: Message, state: FSMContext):
     input_data = message.text
@@ -45,12 +46,14 @@ async def waiting_for_input_data(message: Message, state: FSMContext):
     await message.answer('Введите <b>ответ</b> на задачу', parse_mode='HTML')
     await state.set_state(CreateTaskState.waiting_for_correct_answer)
 
+
 @router.message(CreateTaskState.waiting_for_correct_answer)
 async def waiting_for_correct_answer(message: Message, state: FSMContext):
     correct_answer = message.text
     await state.update_data(correct_answer=correct_answer)
     await message.answer('Введите <b>секретный ответ</b>', parse_mode='HTML')
     await state.set_state(CreateTaskState.waiting_for_secret_answer)
+
 
 @router.message(CreateTaskState.waiting_for_secret_answer)
 async def waiting_for_secret_answer(message: Message, state: FSMContext):
@@ -82,4 +85,3 @@ async def waiting_for_secret_answer(message: Message, state: FSMContext):
         await message.answer('Что то пошло не так')
         logging.exception(e)
     await state.clear()
-

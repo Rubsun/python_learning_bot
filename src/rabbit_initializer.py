@@ -1,4 +1,4 @@
-from aio_pika import connect_robust, ExchangeType
+from aio_pika import ExchangeType
 
 from db.storage.rabbit import channel_pool
 

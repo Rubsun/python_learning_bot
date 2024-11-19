@@ -1,8 +1,8 @@
 import logging.config
+import os
 from contextvars import ContextVar
 
 import yaml
-import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 with open(f'{BASE_DIR}/config/logging.conf.yml', 'r') as f:

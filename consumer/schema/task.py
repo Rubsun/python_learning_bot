@@ -5,6 +5,7 @@ class TaskMessage(BaseMessage):
     user_id: int
     action: str
 
+
 class CreateTaskMessage(BaseMessage):
     title: str
     description: str
@@ -13,6 +14,7 @@ class CreateTaskMessage(BaseMessage):
     correct_answer: str
     secret_answer: str
     action: str
+
 
 class GetTaskByIdMessage(BaseMessage):
     task_id: str

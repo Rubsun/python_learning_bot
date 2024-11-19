@@ -25,15 +25,23 @@ async def process_answer(message: Message, state: FSMContext):
     result = check_user_task_solution(python_code, task)
 
     await state.clear()
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text='Попробовать снова', callback_data=f'select_task:{task.complexity}:{task_id}')],
-        [InlineKeyboardButton(text='Выбрать другую задачу', callback_data='get_another_task')],
-    ])
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text='Попробовать снова', callback_data=f'select_task:{task.complexity}:{task_id}')],
+            [InlineKeyboardButton(text='Выбрать другую задачу', callback_data='get_another_task')],
+        ]
+    )
     if result == 'Решение неверное ❌':
         await message.answer(result, reply_markup=kb)
     elif result == '':
         await message.answer('пусто', reply_markup=kb)
 
     else:
-        await message.answer(result, reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text='Выбрать следующую задачу', callback_data='get_another_task')]]))
+        await message.answer(
+            result,
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text='Выбрать следующую задачу', callback_data='get_another_task')]
+                ]
+            ),
+        )

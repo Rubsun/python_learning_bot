@@ -22,7 +22,7 @@ async def main() -> None:
         queue = await channel.declare_queue(queue_name, durable=True)
 
         async with queue.iterator() as queue_iter:
-            async for message in queue_iter: # type: aio_pika.Message
+            async for message in queue_iter:  # type: aio_pika.Message
                 async with message.process():
                     correlation_id_ctx.set(message.correlation_id)
                     logger.info("Message ...")

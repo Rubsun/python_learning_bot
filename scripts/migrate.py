@@ -1,7 +1,6 @@
 import asyncio
 import logging
 
-from sqlalchemy import text, select
 from sqlalchemy.exc import IntegrityError
 
 from db.model import meta

@@ -1,8 +1,8 @@
+import ast
 import json
+import subprocess
 
 from db.model.task import Task
-import ast
-import subprocess
 
 
 def extract_function_name(user_code: str) -> str | None:
@@ -25,12 +25,7 @@ result = {func_name}{test_args}
 print(result)
 """
     try:
-        result = subprocess.run(
-            ["python3", "-c", test_code],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
+        result = subprocess.run(["python3", "-c", test_code], capture_output=True, text=True, timeout=2)
         return result.stdout.strip()
     except subprocess.TimeoutExpired:
         return "Timeout"
