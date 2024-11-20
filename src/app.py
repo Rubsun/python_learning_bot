@@ -8,7 +8,6 @@ from aiogram import Dispatcher, Bot
 from aiogram.fsm.storage.redis import RedisStorage
 from fastapi import FastAPI
 
-from bg_task import background_tasks
 from config.settings import settings
 from db.storage.db import async_session
 from db.storage.redis import setup_redis
@@ -40,14 +39,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_bot(bot)
 
     temp = await bot.get_webhook_info()
+    logger.info('start webhook')
+    logger.info(temp)
     await bot.set_webhook(settings.BOT_WEBHOOK_URL)
     logger.info('Finished start')
     yield
-    while background_tasks:
-        await asyncio.sleep(0)
-
     await bot.delete_webhook()
-
     logger.info('Ending lifespan')
 
 

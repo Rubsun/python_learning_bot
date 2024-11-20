@@ -1,5 +1,6 @@
 import aio_pika
 import msgpack
+import asyncio
 from aio_pika import ExchangeType
 from sqlalchemy import select
 
@@ -21,18 +22,17 @@ async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMess
         async with async_session() as db:
             not_fetched = await db.execute(select(Task).where(Task.complexity == complexity))
             tasks = not_fetched.scalars().all()
-            tasks_as_dicts = [await task_to_dict(task) for task in tasks]
+
+            tasks_as_dicts = await asyncio.gather(*(task_to_dict(task) for task in tasks))
 
             async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
                 exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
 
                 await exchange.publish(
                     aio_pika.Message(
-                        msgpack.packb(
-                            {
-                                'tasks': tasks_as_dicts,
-                            }
-                        ),
+                        msgpack.packb({
+                            'tasks': tasks_as_dicts,
+                        }),
                         correlation_id=correlation_id_ctx.get(),
                     ),
                     routing_key=settings.USER_TASK_QUEUE_TEMPLATE.format(user_id=message['user_id']),
@@ -50,6 +50,7 @@ async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMess
             )
             db.add(task)
             db.commit()
+
     elif message['action'] == 'get_task_by_id':
         async with async_session() as db:
             taskq = await db.scalar(select(Task).where(Task.id == message['task_id']))

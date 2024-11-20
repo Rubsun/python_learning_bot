@@ -22,7 +22,7 @@ async def process_answer(message: Message, state: FSMContext):
     async with async_session() as db:
         task = await db.scalar(select(Task).where(Task.id == task_id))
 
-    result = check_user_task_solution(python_code, task)
+    result = await check_user_task_solution(python_code, task)
 
     await state.clear()
     kb = InlineKeyboardMarkup(
@@ -44,4 +44,5 @@ async def process_answer(message: Message, state: FSMContext):
                     [InlineKeyboardButton(text='Выбрать следующую задачу', callback_data='get_another_task')]
                 ]
             ),
+            parse_mode='HTML',
         )
