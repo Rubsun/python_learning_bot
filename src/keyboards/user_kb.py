@@ -13,7 +13,7 @@ complex_kb = InlineKeyboardMarkup(
 )
 
 
-async def generate_carousel_keyboard(items, callback_prefix, page=0, page_size=6):
+async def generate_carousel_keyboard(items, callback_prefix, page=0, page_size=4):
     keyboard_buttons = []
     start_index = page * page_size
     end_index = start_index + page_size

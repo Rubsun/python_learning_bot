@@ -23,7 +23,7 @@ async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMess
             not_fetched = await db.execute(select(Task).where(Task.complexity == complexity))
             tasks = not_fetched.scalars().all()
 
-            tasks_as_dicts = await asyncio.gather(*(task_to_dict(task) for task in tasks))
+            tasks_as_dicts = [await task_to_dict(task) for task in tasks]
 
             async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
                 exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)

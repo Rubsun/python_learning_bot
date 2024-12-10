@@ -41,7 +41,7 @@ async def get_tasks(callback: CallbackQuery):
                     TaskMessage(
                         user_id=callback.from_user.id,
                         action=f'get_tasks_by_complexity:{complexity}',
-                        event='tasks'
+                        event='tasks',
                     )
                 ),
             ),
@@ -59,15 +59,16 @@ async def get_tasks(callback: CallbackQuery):
                 if parsed_tasks:
                     break
             except QueueEmpty:
-                await asyncio.sleep(.02)
+                await asyncio.sleep(0.02)
 
+    print('Parsed_task: ', parsed_tasks)
     kb = await generate_carousel_keyboard(parsed_tasks, f'select_task:{complexity}')
     txt = f'Сложность: <b>{complexity}</b>'
     await callback.message.edit_text(text=txt, reply_markup=kb, parse_mode='HTML')
 
 
-
 @router.callback_query(F.data.regexp(r'^select_task:(hard|easy|normal):(next|prev):\d+$'))
+# @router.callback_query(F.data == 'select_task:hard:next:1')
 async def handle_carousel(callback: CallbackQuery):
     data = callback.data.split(':')
     page = int(data[3]) if len(data) > 3 else 0
@@ -100,7 +101,7 @@ async def handle_carousel(callback: CallbackQuery):
                 if parsed_tasks:
                     break
             except QueueEmpty:
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.02)
 
     if parsed_tasks:
         keyboard = await generate_carousel_keyboard(parsed_tasks, f'select_task:{complexity}', page)
@@ -114,6 +115,7 @@ async def handle_carousel(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith('select_task:'))
 async def chosen_task(callback: CallbackQuery, state: FSMContext):
+    print('CALLBACK', callback.data)
     await state.clear()
     _, complexity, task_id = callback.data.split(':')
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
@@ -126,7 +128,7 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
                         task_id=task_id,
                         user_id=callback.from_user.id,
                         action='get_task_by_id',
-                        event='tasks'
+                        event='tasks',
                     )
                 ),
             ),
@@ -144,7 +146,7 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
                 if task:
                     break
             except QueueEmpty:
-                await asyncio.sleep(.02)
+                await asyncio.sleep(0.02)
 
     title_text = f"<b>Задача: {task['title']}</b>"
     complexity_text = f"Сложность: {task['complexity']}"

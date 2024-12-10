@@ -31,7 +31,7 @@ class Settings(BaseSettings):
         return f"amqp://{self.RABBIT_USER}:{self.RABBIT_PASSWORD}@{self.RABBIT_HOST}:{self.RABBIT_PORT}/"
 
     class Config:
-        env_file = "/home/fjord/python_learning_bot/config/.env"
+        env_file = "/home/fjord/bot_crushed_PROMETHEUS/config/.env" #YOUR_ENV_PATH
 
 
 settings = Settings()
