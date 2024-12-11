@@ -5,7 +5,7 @@ import msgpack
 
 from consumer.handlers.task import handle_task
 from consumer.logger import LOGGING_CONFIG, logger, correlation_id_ctx
-from consumer.metrics import TOTAL_RECEIVED_MESSAGES
+from consumer.metrics_init import REQUESTS
 from consumer.schema.task import TaskMessage
 from db.storage.rabbit import channel_pool
 
@@ -23,8 +23,8 @@ async def start_consumer() -> None:
         queue = await channel.declare_queue(queue_name, durable=True)
 
         async with queue.iterator() as queue_iter:
-            async for message in queue_iter:  # type: aio_pika.Message
-                TOTAL_RECEIVED_MESSAGES.inc()
+            async for message in queue_iter:
+                REQUESTS.inc()
                 async with message.process():
                     correlation_id_ctx.set(message.correlation_id)
                     logger.info("Message ...")

@@ -8,6 +8,7 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
+from src.metrics_init import RABBITMQ_MESSAGES_CONSUMED, RABBITMQ_MESSAGES_PRODUCED, measure_time
 from config.settings import settings
 from consumer.schema.task import TaskMessage, GetTaskByIdMessage
 from db.storage.rabbit import channel_pool
@@ -17,24 +18,28 @@ from src.states.task_answer import TaskAnswerState
 
 
 @router.callback_query(F.data == 'get_complexity')
+@measure_time
 async def get_complexity(callback: CallbackQuery):
     txt = 'Выберите уровень сложности'
     await callback.message.answer(text=txt, reply_markup=complex_kb)
 
 
 @router.callback_query(F.data == 'get_another_task')
+@measure_time
 async def get_another_task(callback: CallbackQuery):
     txt = 'Выберите уровень сложности'
     await callback.message.edit_text(text=txt, reply_markup=complex_kb)
 
 
 @router.callback_query(F.data.startswith('complexity_'))
+@measure_time
 async def get_tasks(callback: CallbackQuery):
     complexity = callback.data.split('_')[1]  # это сложность: easy, normal, hard
 
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
         exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
 
+        RABBITMQ_MESSAGES_PRODUCED.inc()
         await exchange.publish(
             aio_pika.Message(
                 msgpack.packb(
@@ -57,6 +62,7 @@ async def get_tasks(callback: CallbackQuery):
                 tasks = await queue.get()
                 parsed_tasks = msgpack.unpackb(tasks.body).get('tasks')
                 if parsed_tasks:
+                    RABBITMQ_MESSAGES_CONSUMED.inc()
                     break
             except QueueEmpty:
                 await asyncio.sleep(0.02)
@@ -68,7 +74,7 @@ async def get_tasks(callback: CallbackQuery):
 
 
 @router.callback_query(F.data.regexp(r'^select_task:(hard|easy|normal):(next|prev):\d+$'))
-# @router.callback_query(F.data == 'select_task:hard:next:1')
+@measure_time
 async def handle_carousel(callback: CallbackQuery):
     data = callback.data.split(':')
     page = int(data[3]) if len(data) > 3 else 0
@@ -77,6 +83,7 @@ async def handle_carousel(callback: CallbackQuery):
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
         exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
 
+        RABBITMQ_MESSAGES_PRODUCED.inc()
         await exchange.publish(
             aio_pika.Message(
                 msgpack.packb(
@@ -99,6 +106,7 @@ async def handle_carousel(callback: CallbackQuery):
                 tasks = await queue.get()
                 parsed_tasks = msgpack.unpackb(tasks.body).get('tasks')
                 if parsed_tasks:
+                    RABBITMQ_MESSAGES_CONSUMED.inc()
                     break
             except QueueEmpty:
                 await asyncio.sleep(0.02)
@@ -114,6 +122,7 @@ async def handle_carousel(callback: CallbackQuery):
 
 
 @router.callback_query(F.data.startswith('select_task:'))
+@measure_time
 async def chosen_task(callback: CallbackQuery, state: FSMContext):
     print('CALLBACK', callback.data)
     await state.clear()
@@ -121,6 +130,7 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
         exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
 
+        RABBITMQ_MESSAGES_PRODUCED.inc()
         await exchange.publish(
             aio_pika.Message(
                 msgpack.packb(
@@ -144,6 +154,7 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
                 q_task = await queue.get()
                 task = msgpack.unpackb(q_task.body).get('task')
                 if task:
+                    RABBITMQ_MESSAGES_CONSUMED.inc()
                     break
             except QueueEmpty:
                 await asyncio.sleep(0.02)
@@ -172,6 +183,7 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('send_answer:'))
+@measure_time
 async def send_answer(callback: CallbackQuery, state: FSMContext):
     _, complexity, task_id = callback.data.split(':')
 

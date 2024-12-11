@@ -3,6 +3,7 @@ from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy import Boolean
 from sqlalchemy import select
 
+from src.metrics_init import measure_time
 from db.model.task import Task
 from db.storage.db import async_session
 from src.bot import get_bot
@@ -12,6 +13,7 @@ from src.utils import check_user_task_solution
 
 
 @router.message(TaskAnswerState.waiting_for_answer)
+@measure_time
 async def process_answer(message: Message, state: FSMContext):
     python_code = message.text
     data = await state.get_data()

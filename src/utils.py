@@ -1,6 +1,4 @@
 import json
-
-from db.model.task import Task
 import ast
 import subprocess
 import os
@@ -8,7 +6,11 @@ import asyncio
 import uuid
 import re
 
+from db.model.task import Task
+from src.metrics_init import measure_time
 
+
+@measure_time
 def clean_error_message(err: str) -> str:
     cleaned_message = re.sub(r'Traceback $most recent call last$:.*?\n', '', err, flags=re.DOTALL)
 
@@ -27,6 +29,8 @@ def clean_error_message(err: str) -> str:
     cleaned_message = '\n'.join(filter(None, detailed_lines)).strip()
     return cleaned_message
 
+
+@measure_time
 def extract_function_name(user_code: str) -> str | None:
     try:
         tree = ast.parse(user_code)
@@ -38,6 +42,7 @@ def extract_function_name(user_code: str) -> str | None:
         return None
 
 
+@measure_time
 async def run_user_function(user_code: str, func_name: str, test_args: tuple, restricted_dir='/env/restricted_dir',
                             username='limiteduser', timeout=5) -> str:
     test_code = f"""
@@ -77,6 +82,7 @@ print(result)
     return stdout.decode().strip(), stderr.decode().strip()
 
 
+@measure_time
 async def check_user_task_solution(user_code: str, task: Task) -> str:
     func_name = extract_function_name(user_code)
     if not func_name:

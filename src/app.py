@@ -7,6 +7,8 @@ import uvicorn
 from aiogram import Dispatcher, Bot
 from aiogram.fsm.storage.redis import RedisStorage
 from fastapi import FastAPI
+from starlette_context import plugins
+from starlette_context.middleware import RawContextMiddleware
 
 from config.settings import settings
 from db.storage.db import async_session
@@ -19,7 +21,9 @@ from src.handlers.admin_handlers.state_handlers.router import router as admin_st
 from src.handlers.user_handlers.callback.router import router as user_callback_router
 from src.handlers.user_handlers.command.router import router as user_command_start_router
 from src.handlers.user_handlers.state_handlers.router import router as user_state_router
+from src.api.tech.router import router as tech_router
 from src.logger import LOGGING_CONFIG, logger
+from src.middlewares.rps_middleware import RequestCountMiddleware
 from src.rabbit_initializer import init_rabbitmq
 
 
@@ -54,8 +58,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 def create_app() -> FastAPI:
     app = FastAPI(docs_url='/swagger', lifespan=lifespan)
-    app.include_router(tg_router)
-    # app.add_middleware(RawContextMiddleware, plugins=[plugins.CorrelationIdPlugin()])
+    app.include_router(tg_router, prefix='/tg', tags=['tg'])
+    app.include_router(tech_router, prefix='/tech', tags=['tech'])
+    app.middleware("http")(RequestCountMiddleware())
+    app.add_middleware(RawContextMiddleware, plugins=[plugins.CorrelationIdPlugin()])
     return app
 
 
@@ -81,8 +87,7 @@ async def start_polling():
 
 
 if __name__ == '__main__':
-    # settings.BOT_WEBHOOK_URL = ''
     if settings.BOT_WEBHOOK_URL:
-        uvicorn.run('src.app:create_app', factory=True, host='0.0.0.0', port=8000, workers=1)
+        uvicorn.run('src.app:create_app', factory=True, host='0.0.0.0', port=8001, workers=1)
     else:
         asyncio.run(start_polling())

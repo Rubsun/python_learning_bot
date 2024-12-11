@@ -1,3 +1,7 @@
+from consumer.metrics_init import measure_time
+
+
+@measure_time
 async def task_to_dict(task):
     return {
         "id": str(task.id),

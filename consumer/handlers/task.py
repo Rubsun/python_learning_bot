@@ -1,9 +1,11 @@
 import aio_pika
 import msgpack
 import asyncio
+import time
 from aio_pika import ExchangeType
 from sqlalchemy import select
 
+from consumer.metrics_init import DB_FETCH_REQUESTS, DB_FETCH_PROCESSING_TIME
 from config.settings import settings
 from consumer.logger import correlation_id_ctx
 from consumer.schema.task import TaskMessage, CreateTaskMessage, GetTaskByIdMessage
@@ -11,6 +13,7 @@ from consumer.utils import task_to_dict
 from db.model.task import Task
 from db.storage.db import async_session
 from db.storage.rabbit import channel_pool
+from src.api.tech.metrics import metrics
 
 
 async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMessage):
@@ -20,8 +23,13 @@ async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMess
         complexity = message['action'].split(':')[1]
 
         async with async_session() as db:
+            DB_FETCH_REQUESTS.inc()
+            start_time = time.monotonic()
+
             not_fetched = await db.execute(select(Task).where(Task.complexity == complexity))
             tasks = not_fetched.scalars().all()
+
+            DB_FETCH_PROCESSING_TIME.observe(time.monotonic() - start_time)
 
             tasks_as_dicts = [await task_to_dict(task) for task in tasks]
 
@@ -53,7 +61,13 @@ async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMess
 
     elif message['action'] == 'get_task_by_id':
         async with async_session() as db:
+            DB_FETCH_REQUESTS.inc()
+            start_time = time.monotonic()
+
             taskq = await db.scalar(select(Task).where(Task.id == message['task_id']))
+
+            DB_FETCH_PROCESSING_TIME.observe(time.monotonic() - start_time)
+
         task = await task_to_dict(taskq)
         async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
             exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
