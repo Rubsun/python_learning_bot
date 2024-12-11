@@ -1,6 +1,8 @@
 import asyncio
 import logging
+import time
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import AsyncGenerator
 
 import uvicorn
@@ -47,12 +49,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await bot.set_webhook(settings.BOT_WEBHOOK_URL)
 
     temp = await bot.get_webhook_info()
-    logger.info(temp)
+    logger.info(f'WEBHOOK: {temp}')
     logger.info('Finished start')
     yield
+
+    start_time = time.monotonic()
+    is_used = False
     while background_tasks:
+        if (time.monotonic() - start_time)/3600 > 0.5 and not is_used:
+            logger.warning('Background tasks has expired for more than 30 seconds')
+            is_used = True
+
         await asyncio.sleep(0)
+
+    if background_tasks:
+        logger.warning('not all background tasks are done')
+
+    logger.info('closed background tasks...')
+    logger.info(f'[{datetime.now()}]  background tasks: {[i for i in background_tasks]}')
     await bot.delete_webhook()
+    logger.info('delete webhook...')
+    temp = await bot.get_webhook_info()
+    logger.info(f'WEBHOOK: {temp}')
     logger.info('Ending lifespan')
 
 
@@ -82,7 +100,7 @@ async def start_polling():
     await bot.delete_webhook()
     await init_rabbitmq()
 
-    logging.error('Dependencies launched')
+    logger.info('Dependencies launched')
     await dp.start_polling(bot, dp=async_session)
 
 

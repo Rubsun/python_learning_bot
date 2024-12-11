@@ -1,6 +1,6 @@
 FROM python:3.11
 
-WORKDIR /home/maksim/PycharmProjects/python_learning_bot
+WORKDIR code
 
 COPY . .
 

@@ -35,4 +35,4 @@ services:
 #      - "9090:9090"
 #    restart: unless-stopped
 #    volumes:
-#      - ./prometheus:/etc/prometheus
+#      - /home/fjord/python_learning_bot/prometheus:/etc/prometheus

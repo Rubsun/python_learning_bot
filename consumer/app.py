@@ -27,7 +27,7 @@ async def start_consumer() -> None:
                 REQUESTS.inc()
                 async with message.process():
                     correlation_id_ctx.set(message.correlation_id)
-                    logger.info("Message ...")
+                    logger.info(f"Message ...")
                     body: TaskMessage = msgpack.unpackb(message.body)
                     if body['event'] == 'tasks':
                         logging.info(body['event'])

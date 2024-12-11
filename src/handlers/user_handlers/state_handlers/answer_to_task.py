@@ -1,8 +1,8 @@
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
-from sqlalchemy import Boolean
 from sqlalchemy import select
 
+from src.logger import logger
 from src.metrics_init import measure_time
 from db.model.task import Task
 from db.storage.db import async_session
@@ -33,11 +33,8 @@ async def process_answer(message: Message, state: FSMContext):
             [InlineKeyboardButton(text='Выбрать другую задачу', callback_data='get_another_task')],
         ]
     )
-    if result == 'Решение неверное ❌':
+    if result.startswith('Решение неверное'):
         await message.answer(result, reply_markup=kb)
-    elif result == '':
-        await message.answer('пусто', reply_markup=kb)
-
     else:
         await message.answer(
             result,

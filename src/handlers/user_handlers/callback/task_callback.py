@@ -1,4 +1,5 @@
 import asyncio
+import logging
 
 import aio_pika
 import msgpack
@@ -8,6 +9,7 @@ from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
+from src.logger import logger, LOGGING_CONFIG
 from src.metrics_init import RABBITMQ_MESSAGES_CONSUMED, RABBITMQ_MESSAGES_PRODUCED, measure_time
 from config.settings import settings
 from consumer.schema.task import TaskMessage, GetTaskByIdMessage
@@ -16,6 +18,8 @@ from src.handlers.user_handlers.callback.router import router
 from src.keyboards.user_kb import complex_kb, generate_carousel_keyboard
 from src.states.task_answer import TaskAnswerState
 
+
+logging.config.dictConfig(LOGGING_CONFIG)
 
 @router.callback_query(F.data == 'get_complexity')
 @measure_time
@@ -67,10 +71,14 @@ async def get_tasks(callback: CallbackQuery):
             except QueueEmpty:
                 await asyncio.sleep(0.02)
 
-    print('Parsed_task: ', parsed_tasks)
-    kb = await generate_carousel_keyboard(parsed_tasks, f'select_task:{complexity}')
-    txt = f'Сложность: <b>{complexity}</b>'
-    await callback.message.edit_text(text=txt, reply_markup=kb, parse_mode='HTML')
+    try:
+        kb = await generate_carousel_keyboard(parsed_tasks, f'select_task:{complexity}')
+        txt = f'Сложность: <b>{complexity}</b>'
+        await callback.message.edit_text(text=txt, reply_markup=kb, parse_mode='HTML')
+    except TypeError as type_err:
+        logger.critical(type_err)
+    except Exception as e:
+        logger.error(e)
 
 
 @router.callback_query(F.data.regexp(r'^select_task:(hard|easy|normal):(next|prev):\d+$'))
@@ -116,7 +124,6 @@ async def handle_carousel(callback: CallbackQuery):
         await callback.message.edit_text(
             text=f'Сложность: <b>{complexity}</b>', reply_markup=keyboard, parse_mode='HTML'
         )
-        # await callback.message.edit_reply_markup(reply_markup=keyboard)
     else:
         await callback.message.answer('Нет данных для отображения.')
 
@@ -124,7 +131,6 @@ async def handle_carousel(callback: CallbackQuery):
 @router.callback_query(F.data.startswith('select_task:'))
 @measure_time
 async def chosen_task(callback: CallbackQuery, state: FSMContext):
-    print('CALLBACK', callback.data)
     await state.clear()
     _, complexity, task_id = callback.data.split(':')
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
@@ -159,27 +165,32 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
             except QueueEmpty:
                 await asyncio.sleep(0.02)
 
-    title_text = f"<b>Задача: {task['title']}</b>"
-    complexity_text = f"Сложность: {task['complexity']}"
-    description_text = f"Описание: {task['description']}"
+    try:
+        title_text = f"<b>Задача: {task['title']}</b>"
+        complexity_text = f"Сложность: {task['complexity']}"
+        description_text = f"Описание: {task['description']}"
 
-    texts_to_send = [title_text, complexity_text, description_text]
-    full_text = '\n'.join(texts_to_send)
-    max_length = 4096
+        texts_to_send = [title_text, complexity_text, description_text]
+        full_text = '\n'.join(texts_to_send)
+        max_length = 4096
 
-    task_kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text='Отправить решение', callback_data=f'send_answer:{complexity}:{task_id}')],
-            [InlineKeyboardButton(text='Выбрать другую задачу', callback_data='get_another_task')],
-        ]
-    )
+        task_kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text='Отправить решение', callback_data=f'send_answer:{complexity}:{task_id}')],
+                [InlineKeyboardButton(text='Выбрать другую задачу', callback_data='get_another_task')],
+            ]
+        )
 
-    if len(full_text) < max_length:
-        await callback.message.edit_text(text=full_text, parse_mode='HTML', reply_markup=task_kb)
-    else:
-        for text in texts_to_send[:-2]:
-            await callback.message.answer(text, parse_mode='HTML')
-        await callback.message.answer(text=texts_to_send[-1], reply_markup=task_kb)
+        if len(full_text) < max_length:
+            await callback.message.edit_text(text=full_text, parse_mode='HTML', reply_markup=task_kb)
+        else:
+            for text in texts_to_send[:-2]:
+                await callback.message.answer(text, parse_mode='HTML')
+            await callback.message.answer(text=texts_to_send[-1], reply_markup=task_kb)
+    except TypeError as type_err:
+        logger.critical(type_err)
+    except Exception as e:
+        logger.error(e)
 
 
 @router.callback_query(F.data.startswith('send_answer:'))

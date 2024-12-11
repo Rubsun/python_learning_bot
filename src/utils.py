@@ -1,3 +1,4 @@
+import logging
 import json
 import ast
 import subprocess
@@ -6,9 +7,11 @@ import asyncio
 import uuid
 import re
 
+from consumer.logger import logger, LOGGING_CONFIG
 from db.model.task import Task
 from src.metrics_init import measure_time
 
+logging.config.dictConfig(LOGGING_CONFIG)
 
 @measure_time
 def clean_error_message(err: str) -> str:
@@ -27,6 +30,8 @@ def clean_error_message(err: str) -> str:
             detailed_lines.append(line)
 
     cleaned_message = '\n'.join(filter(None, detailed_lines)).strip()
+
+    logger.info('Cleaned error message: %s', cleaned_message)
     return cleaned_message
 
 
@@ -39,12 +44,13 @@ def extract_function_name(user_code: str) -> str | None:
                 return node.name
         return None
     except SyntaxError:
+        logger.info("No user's function name")
         return None
 
 
 @measure_time
 async def run_user_function(user_code: str, func_name: str, test_args: tuple, restricted_dir='/env/restricted_dir',
-                            username='limiteduser', timeout=5) -> str:
+                            username='limiteduser', timeout=3) -> str:
     test_code = f"""
 {user_code}
 
@@ -60,7 +66,6 @@ print(result)
     with open(script_path, 'w') as f:
         f.write(test_code)
 
-    # Correcting the chown command
     subprocess.run(['sudo', 'chown', username, script_path], check=True)
     subprocess.run(['sudo', 'chmod', '500', script_path], check=True)
 
@@ -73,8 +78,10 @@ print(result)
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout)
     except asyncio.TimeoutError:
         proc.kill()
-        stdout, stderr = await proc.communicate()  # Get any output before terminating
+        logger.info("user's code is running more than 3 seconds")
         return 'Execution timed out', f'Process was killed after {timeout} seconds.'
+    except Exception as e:
+        logger.error(e)
 
     if os.path.exists(script_path):
         os.remove(script_path)
@@ -96,8 +103,8 @@ async def check_user_task_solution(user_code: str, task: Task) -> str:
         if err:
             cleaned_message = clean_error_message(err)
             return f'<b>Ваш код выдал ошибку</b>:\n{cleaned_message}'
-        if str(result) != str(expected_output):
-            return "Решение неверное ❌"
+        elif str(result) != str(expected_output):
+            return f"Решение неверное!❌\nПравильный ответ: {expected_output}.\nВаш ответ: {result}"
 
     secret_input = json.loads(task.secret_input)
     secret_answers = json.loads(task.secret_answer)
@@ -107,8 +114,8 @@ async def check_user_task_solution(user_code: str, task: Task) -> str:
         if err:
             cleaned_message = clean_error_message(err)
             return f'<b>Ваш код выдал ошибку</b>:\n{cleaned_message}'
-        if str(result_secret) != str(expected_output_secret):
-            return "Решение неверное ❌"
+        elif str(result_secret) != str(expected_output_secret):
+            return "Решение неверное ❌\nПопробуйте еще раз!"
 
-    return f"Решение верное! Правильные ответы: {expected_output}, ваши ответы: {result}"
+    return f"Решение верное!\nПравильные ответы: {', '.join(expected_output)}.\nВаши ответы: {', '.join(result)}"
 

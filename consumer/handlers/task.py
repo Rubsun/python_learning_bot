@@ -18,7 +18,6 @@ from src.api.tech.metrics import metrics
 
 async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMessage):
     if message['action'].startswith('get_tasks_by_complexity'):
-        print(message)
 
         complexity = message['action'].split(':')[1]
 
