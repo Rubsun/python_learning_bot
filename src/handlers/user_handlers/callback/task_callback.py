@@ -8,6 +8,7 @@ from aio_pika.exceptions import QueueEmpty
 from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from blib2to3.pgen2.tokenize import AWAIT
 
 from src.logger import logger, LOGGING_CONFIG
 from src.metrics_init import RABBITMQ_MESSAGES_CONSUMED, RABBITMQ_MESSAGES_PRODUCED, measure_time
@@ -201,6 +202,7 @@ async def send_answer(callback: CallbackQuery, state: FSMContext):
     await state.set_state(TaskAnswerState.waiting_for_answer)
     await state.update_data(message_id=callback.message.message_id)
     await state.update_data(task_id=task_id)
+    await state.update_data(user_id=callback.from_user.id)
 
     back_kb = InlineKeyboardMarkup(
         inline_keyboard=[
