@@ -1,0 +1,22 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440111",
+    "title": "test",
+    "complexity": "hard",
+    "description": "A test task",
+    "input_data": "[[1, 2]]",
+    "correct_answer": "[3]",
+    "secret_input": "[[3, 5]]",
+    "secret_answer": "[8]"
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440112",
+    "title": "test2",
+    "complexity": "hard",
+    "description": "A test task2",
+    "input_data": "[[2, 3]]",
+    "correct_answer": "[5]",
+    "secret_input": "[[5, 5]]",
+    "secret_answer": "[10]"
+  }
+]
