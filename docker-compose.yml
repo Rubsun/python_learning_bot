@@ -26,13 +26,14 @@ services:
     ports:
       - "6379:6379"
 
-#  prometheus:
-#    image: prom/prometheus
-#    container_name: prometheus
-#    command:
-#      - "--config.file=/etc/prometheus/prometheus_config.yml"
-#    ports:
-#      - "9090:9090"
-#    restart: unless-stopped
-#    volumes:
-#      - /home/fjord/python_learning_bot/prometheus:/etc/prometheus
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    network_mode: host
+    command:
+      - "--config.file=/etc/prometheus/prometheus_config.yml"
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    volumes:
+      - /home/fjord/python_learning_bot/prometheus:/etc/prometheus
