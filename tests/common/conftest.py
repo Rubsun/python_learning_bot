@@ -1,4 +1,3 @@
-import logging
 from collections import deque
 from pathlib import Path
 from typing import Any, AsyncGenerator
@@ -59,7 +58,6 @@ async def _load_queue(
     correlation_id,
     mock_exchange: MockExchange,
 ):
-    logging.info('sigma2')
 
     queue = MockQueue(deque())
 

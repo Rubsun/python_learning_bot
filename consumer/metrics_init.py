@@ -1,12 +1,17 @@
 import time
-from prometheus_client import Counter, Histogram
 from functools import wraps
 
+from prometheus_client import Counter, Histogram, CollectorRegistry
 
-REQUESTS = Counter('requests_total', 'Total number of requests')
-DB_FETCH_REQUESTS = Counter('db_fetch_requests_total', 'Total number of requests at db')
-DB_FETCH_PROCESSING_TIME = Histogram('db_fetch_processing_time', 'Request processing time (s)')
-INTEGRATION_METHOD_DURATION = Histogram('integration_method_duration_seconds', 'Time spent in integration methods')
+registry = CollectorRegistry()
+
+INTEGRATION_METHOD_DURATION = Histogram(
+    'integration_method_duration_seconds', 'Time spent in integration methods', registry=registry
+)
+REQUESTS = Counter('requests_total', 'Total number of requests', registry=registry)
+
+DB_FETCH_REQUESTS = Counter('db_fetch_requests_total', 'Total number of requests at db', registry=registry)
+DB_FETCH_PROCESSING_TIME = Histogram('db_fetch_processing_time', 'Request processing time (s)', registry=registry)
 
 
 def measure_time(func):

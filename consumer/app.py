@@ -7,7 +7,7 @@ from consumer.handlers.task import handle_task
 from consumer.logger import LOGGING_CONFIG, logger, correlation_id_ctx
 from consumer.metrics_init import REQUESTS
 from consumer.schema.task import TaskMessage
-from db.storage.rabbit import channel_pool
+from db.storage import rabbit
 
 
 async def start_consumer() -> None:
@@ -16,18 +16,16 @@ async def start_consumer() -> None:
 
     queue_name = "user_messages"
 
-    async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
+    async with rabbit.channel_pool.acquire() as channel:  # type: aio_pika.Channel
 
         await channel.set_qos(prefetch_count=10)
 
         queue = await channel.declare_queue(queue_name, durable=True)
-
         async with queue.iterator() as queue_iter:
-            async for message in queue_iter:
+            async for message in queue_iter:  # type: aio_pika.Message
                 REQUESTS.inc()
                 async with message.process():
                     correlation_id_ctx.set(message.correlation_id)
-                    logger.info(f"Message ...")
                     body: TaskMessage = msgpack.unpackb(message.body)
                     if body['event'] == 'tasks':
                         logging.info(body['event'])

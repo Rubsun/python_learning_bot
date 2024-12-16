@@ -15,7 +15,6 @@ from db.storage.db import async_session
 
 
 async def handle_task(message: TaskMessage | CreateTaskMessage | GetTaskByIdMessage):
-    print(message['action'])
     async with async_session() as db:
         logging.info(f"handle_task: session ID = {id(db)}")
     if message['action'].startswith('get_tasks_by_complexity'):

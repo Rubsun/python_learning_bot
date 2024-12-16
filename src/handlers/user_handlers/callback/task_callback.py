@@ -8,17 +8,15 @@ from aio_pika.exceptions import QueueEmpty
 from aiogram import F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from blib2to3.pgen2.tokenize import AWAIT
 
-from src.logger import logger, LOGGING_CONFIG
-from src.metrics_init import RABBITMQ_MESSAGES_CONSUMED, RABBITMQ_MESSAGES_PRODUCED, measure_time
 from config.settings import settings
 from consumer.schema.task import TaskMessage, GetTaskByIdMessage
 from db.storage.rabbit import channel_pool
 from src.handlers.user_handlers.callback.router import router
 from src.keyboards.user_kb import complex_kb, generate_carousel_keyboard
+from src.logger import logger, LOGGING_CONFIG
+from src.metrics_init import RABBITMQ_MESSAGES_CONSUMED, RABBITMQ_MESSAGES_PRODUCED, measure_time
 from src.states.task_answer import TaskAnswerState
-
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -40,7 +38,7 @@ async def get_another_task(callback: CallbackQuery):
 @router.callback_query(F.data.startswith('complexity_'))
 @measure_time
 async def get_tasks(callback: CallbackQuery):
-    complexity = callback.data.split('_')[1]  # это сложность: easy, normal, hard
+    complexity = callback.data.split('_')[1]
 
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
         exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
