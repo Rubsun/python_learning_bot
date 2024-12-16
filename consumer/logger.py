@@ -19,6 +19,6 @@ class ConsoleFormatter(logging.Formatter):
         return super().format(record)
 
 
-correlation_id_ctx = ContextVar('correlation_id')
+correlation_id_ctx: ContextVar[str] = ContextVar('correlation_id')
 
 logger = logging.getLogger('consumer_logger')

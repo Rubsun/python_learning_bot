@@ -16,6 +16,7 @@ from src.metrics_init import measure_time
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
+
 @measure_time
 def clean_error_message(err: str) -> str:
     cleaned_message = re.sub(r'Traceback $most recent call last$:.*?\n', '', err, flags=re.DOTALL)
@@ -52,8 +53,14 @@ def extract_function_name(user_code: str) -> str | None:
 
 
 @measure_time
-async def run_user_function(user_code: str, func_name: str, test_args: tuple, restricted_dir='/env/restricted_dir',
-                            username='limiteduser', timeout=3) -> str:
+async def run_user_function(
+    user_code: str,
+    func_name: str,
+    test_args: tuple,
+    restricted_dir='/env/restricted_dir',
+    username='limiteduser',
+    timeout=3,
+) -> str:
     test_code = f"""
 {user_code}
 
@@ -73,8 +80,7 @@ print(result)
     subprocess.run(['sudo', 'chmod', '500', script_path], check=True)
 
     proc = await asyncio.create_subprocess_exec(
-        'sudo', '-u', username, 'env', 'python3', script_path,
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        'sudo', '-u', username, 'env', 'python3', script_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
 
     try:
@@ -102,8 +108,10 @@ async def check_user_task_solution(user_code: str, task: Task) -> str:
     correct_answers = json.loads(task.get('correct_answer'))
 
     if input_data is None or correct_answers is None:
-        logger.error(f'[{datetime.now()}] Not exist input data or correct answers!!! '
-                     f'TASK ID: {task.get("id")}\n USER ANSWER: {user_code}')
+        logger.error(
+            f'[{datetime.now()}] Not exist input data or correct answers!!! '
+            f'TASK ID: {task.get("id")}\n USER ANSWER: {user_code}'
+        )
         return 'Технические шоколадки. Попробуйте позже!'
 
     test_count = 0
@@ -120,8 +128,10 @@ async def check_user_task_solution(user_code: str, task: Task) -> str:
     secret_answers = json.loads(task.get('secret_answer'))
 
     if secret_answers is None or secret_input is None:
-        logger.error(f'[{datetime.now()}] Not exist secret answers or secret input!!! '
-                     f'TASK ID: {task.get("id")}\n USER ANSWER: {user_code}')
+        logger.error(
+            f'[{datetime.now()}] Not exist secret answers or secret input!!! '
+            f'TASK ID: {task.get("id")}\n USER ANSWER: {user_code}'
+        )
         return 'Технические шоколадки. Попробуйте позже!'
 
     for test_args, expected_output_secret in zip(secret_input, secret_answers):
@@ -134,4 +144,3 @@ async def check_user_task_solution(user_code: str, task: Task) -> str:
             return f"Решение неверное ❌\nТест №{test_count}: Попробуйте еще раз!"
 
     return f"Решение верное! Поздравляю! Вы прошли 100% тестов! 🎉"
-

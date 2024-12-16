@@ -70,7 +70,11 @@ async def process_answer(message: Message, state: FSMContext):
     await state.clear()
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text='Попробовать снова', callback_data=f'select_task:{task.get('complexity')}:{task_id}')],
+            [
+                InlineKeyboardButton(
+                    text='Попробовать снова', callback_data=f'select_task:{task.get('complexity')}:{task_id}'
+                )
+            ],
             [InlineKeyboardButton(text='Выбрать другую задачу', callback_data='get_another_task')],
         ]
     )

@@ -22,6 +22,7 @@ from src.states.task_answer import TaskAnswerState
 
 logging.config.dictConfig(LOGGING_CONFIG)
 
+
 @router.callback_query(F.data == 'get_complexity')
 @measure_time
 async def get_complexity(callback: CallbackQuery):

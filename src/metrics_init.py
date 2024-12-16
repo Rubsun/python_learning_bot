@@ -7,6 +7,7 @@ INTEGRATION_METHOD_DURATION = Histogram('integration_method_duration_seconds', '
 RABBITMQ_MESSAGES_PRODUCED = Counter('rabbitmq_messages_produced_total', 'Total messages produced to RabbitMQ')
 RABBITMQ_MESSAGES_CONSUMED = Counter('rabbitmq_messages_consumed_total', 'Total messages consumed from RabbitMQ')
 
+
 def measure_time(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -15,4 +16,5 @@ def measure_time(func):
         duration = time.monotonic() - start_time
         INTEGRATION_METHOD_DURATION.observe(duration)
         return result
+
     return wrapper

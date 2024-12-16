@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     start_time = time.monotonic()
     is_used = False
     while background_tasks:
-        if (time.monotonic() - start_time)/3600 > 0.5 and not is_used:
+        if (time.monotonic() - start_time) / 3600 > 0.5 and not is_used:
             logger.warning('Background tasks has expired for more than 30 seconds')
             is_used = True
 
