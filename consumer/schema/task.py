@@ -7,12 +7,14 @@ class TaskMessage(BaseMessage):
 
 
 class CreateTaskMessage(BaseMessage):
+    id: str
     title: str
-    description: str
     complexity: str
-    input_data: str
-    correct_answer: str
-    secret_answer: str
+    description: str
+    input_data: list
+    correct_answer: list
+    secret_input: list
+    secret_answer: list
     action: str
 
 
