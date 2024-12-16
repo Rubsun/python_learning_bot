@@ -15,6 +15,6 @@ async def load_fixture(files: list[Path], session: AsyncSession) -> None:
                 table = meta.metadata.tables[file.stem]
                 await session.execute(insert(table).values(json.load(f)))
         await session.commit()
-    except Exception as e:
+    except Exception as e: # noqa
         logging.error(e)
-        await session.rollback()
+    await session.rollback()

@@ -7,14 +7,14 @@ from aio_pika import ExchangeType
 from aio_pika.exceptions import QueueEmpty
 from aiogram import F
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 
 from config.settings import settings
-from consumer.schema.task import TaskMessage, GetTaskByIdMessage
+from consumer.schema.task import GetTaskByIdMessage, TaskMessage
 from db.storage.rabbit import channel_pool
 from src.handlers.user_handlers.callback.router import router
 from src.keyboards.user_kb import complex_kb, generate_carousel_keyboard
-from src.logger import logger, LOGGING_CONFIG
+from src.logger import LOGGING_CONFIG, logger
 from src.metrics_init import RABBITMQ_MESSAGES_CONSUMED, RABBITMQ_MESSAGES_PRODUCED, measure_time
 from src.states.task_answer import TaskAnswerState
 
@@ -41,7 +41,7 @@ async def get_tasks(callback: CallbackQuery):
     complexity = callback.data.split('_')[1]
 
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
-        exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
+        exchange = await channel.declare_exchange('user_tasks', ExchangeType.TOPIC, durable=True)
 
         RABBITMQ_MESSAGES_PRODUCED.inc()
         await exchange.publish(
@@ -77,8 +77,6 @@ async def get_tasks(callback: CallbackQuery):
         await callback.message.edit_text(text=txt, reply_markup=kb, parse_mode='HTML')
     except TypeError as type_err:
         logger.critical(type_err)
-    except Exception as e:
-        logger.error(e)
 
 
 @router.callback_query(F.data.regexp(r'^select_task:(hard|easy|normal):(next|prev):\d+$'))
@@ -89,7 +87,7 @@ async def handle_carousel(callback: CallbackQuery):
     complexity = data[1]
 
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
-        exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
+        exchange = await channel.declare_exchange('user_tasks', ExchangeType.TOPIC, durable=True)
 
         RABBITMQ_MESSAGES_PRODUCED.inc()
         await exchange.publish(
@@ -134,7 +132,7 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     _, complexity, task_id = callback.data.split(':')
     async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
-        exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
+        exchange = await channel.declare_exchange('user_tasks', ExchangeType.TOPIC, durable=True)
 
         RABBITMQ_MESSAGES_PRODUCED.inc()
         await exchange.publish(
@@ -189,8 +187,6 @@ async def chosen_task(callback: CallbackQuery, state: FSMContext):
             await callback.message.answer(text=texts_to_send[-1], reply_markup=task_kb)
     except TypeError as type_err:
         logger.critical(type_err)
-    except Exception as e:
-        logger.error(e)
 
 
 @router.callback_query(F.data.startswith('send_answer:'))

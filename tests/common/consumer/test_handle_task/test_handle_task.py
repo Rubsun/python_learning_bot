@@ -21,7 +21,7 @@ SEED_DIR = BASE_DIR / 'seeds'
     ('predefined_queue', 'seeds', 'correlation_id'),
     [
         (
-            TaskMessage(user_id=1, action=f'get_tasks_by_complexity:hard', event='tasks'),
+            TaskMessage(user_id=1, action='get_tasks_by_complexity:hard', event='tasks'),
             [SEED_DIR / 'public.task.json'],
             str(uuid.uuid4()),
         )

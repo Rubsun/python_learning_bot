@@ -21,4 +21,4 @@ channel_pool: Pool = Pool(get_channel, max_size=10)
 
 
 async def get_connection() -> AbstractRobustConnection:
-    return await aio_pika.connect_robust("amqp://guest:guest@localhost/")
+    return await aio_pika.connect_robust('amqp://guest:guest@localhost/')

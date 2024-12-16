@@ -15,7 +15,7 @@ with open(f'{BASE_DIR}/config/logging.conf.yml', 'r') as f:
 class ConsoleFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         with suppress(ContextDoesNotExistError):
-            if corr_id := context.get(HeaderKeys.correlation_id, None):
+            if corr_id := context.get(HeaderKeys.correlation_id):
                 return '[%s] %s' % (corr_id, super().format(record))
 
         return super().format(record)

@@ -1,19 +1,19 @@
-from asyncio import QueueEmpty
+import asyncio
 import logging
+from asyncio import QueueEmpty
 
-from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 import aio_pika
 import msgpack
-import asyncio
-from config.settings import settings
-from src.logger import logger, LOGGING_CONFIG
+from aiogram.fsm.context import FSMContext
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
+from config.settings import settings
 from consumer.schema.task import GetTaskByIdMessage
 from db.storage.rabbit import channel_pool
-from src.metrics_init import measure_time, RABBITMQ_MESSAGES_PRODUCED, RABBITMQ_MESSAGES_CONSUMED
 from src.bot import get_bot
 from src.handlers.user_handlers.state_handlers.router import router
+from src.logger import LOGGING_CONFIG
+from src.metrics_init import RABBITMQ_MESSAGES_CONSUMED, RABBITMQ_MESSAGES_PRODUCED, measure_time
 from src.states.task_answer import TaskAnswerState
 from src.utils import check_user_task_solution
 
@@ -29,10 +29,9 @@ async def process_answer(message: Message, state: FSMContext):
     user_id = data.get('user_id')
     bot = get_bot()
     await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=message_id)
-    logger.debug(f'user_id: {user_id}, task_id: {task_id}')
 
-    async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
-        exchange = await channel.declare_exchange("user_tasks", aio_pika.ExchangeType.TOPIC, durable=True)
+    async with channel_pool.acquire() as channel:
+        exchange = await channel.declare_exchange('user_tasks', aio_pika.ExchangeType.TOPIC, durable=True)
 
         RABBITMQ_MESSAGES_PRODUCED.inc()
         await exchange.publish(
@@ -58,13 +57,11 @@ async def process_answer(message: Message, state: FSMContext):
                 q_task = await queue.get()
                 task = msgpack.unpackb(q_task.body).get('task')
                 if task:
-                    logger.debug(f'TASK:\n{task}')
                     RABBITMQ_MESSAGES_CONSUMED.inc()
                     break
             except QueueEmpty:
                 await asyncio.sleep(0.02)
 
-    logger.debug(f'TASK:\n{task}')
     result = await check_user_task_solution(python_code, task)
 
     await state.clear()
@@ -72,7 +69,7 @@ async def process_answer(message: Message, state: FSMContext):
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text='Попробовать снова', callback_data=f'select_task:{task.get('complexity')}:{task_id}'
+                    text='Попробовать снова', callback_data=f"select_task:{task.get('complexity')}:{task_id}"
                 )
             ],
             [InlineKeyboardButton(text='Выбрать другую задачу', callback_data='get_another_task')],

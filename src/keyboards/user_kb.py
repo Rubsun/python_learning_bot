@@ -1,4 +1,4 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 start_kb = InlineKeyboardMarkup(
     inline_keyboard=[[InlineKeyboardButton(text='Получить задание', callback_data='get_complexity')]]
@@ -25,11 +25,11 @@ async def generate_carousel_keyboard(items, callback_prefix, page=0, page_size=4
     navigation_buttons = []
     if page > 0:
         navigation_buttons.append(
-            InlineKeyboardButton(text='⬅️ Назад', callback_data=f"{callback_prefix}:prev:{page - 1}")
+            InlineKeyboardButton(text='⬅️ Назад', callback_data=f'{callback_prefix}:prev:{page - 1}')
         )
     if end_index < len(items):
         navigation_buttons.append(
-            InlineKeyboardButton(text='➡️ Вперед', callback_data=f"{callback_prefix}:next:{page + 1}")
+            InlineKeyboardButton(text='➡️ Вперед', callback_data=f'{callback_prefix}:next:{page + 1}')
         )
 
     if navigation_buttons:

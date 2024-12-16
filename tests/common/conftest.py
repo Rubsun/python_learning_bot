@@ -9,23 +9,17 @@ import pytest_asyncio
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.storage import rabbit as consumer_rabbit, rabbit
-from db.storage.db import get_db, async_session
+from db.storage import rabbit, rabbit as consumer_rabbit
+from db.storage.db import async_session, get_db
 from scripts.load_fixture import load_fixture
 from src.app import create_app
-from tests.mocking.rabbit import (
-    MockQueue,
-    MockChannelPool,
-    MockChannel,
-    MockExchange,
-    MockExchangeMessage,
-)
+from tests.mocking.rabbit import MockChannel, MockChannelPool, MockExchange, MockExchangeMessage, MockQueue
 
 BASE_DIR = Path(__file__).parent
-SEED_DIR = BASE_DIR / "seeds"
+SEED_DIR = BASE_DIR / 'seeds'
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope='session')
 def app() -> FastAPI:
     return create_app()
 
@@ -36,9 +30,11 @@ async def db_session(app: FastAPI) -> AsyncSession:
 
         async def overrided_db_session() -> AsyncGenerator[AsyncSession, None]:
             yield session
+            await session.rollback()
 
         app.dependency_overrides[get_db] = overrided_db_session
         yield session
+        await session.rollback()
 
 
 @pytest_asyncio.fixture()
@@ -46,7 +42,7 @@ async def _load_seeds(db_session: AsyncSession, seeds: list[Path]) -> None:
     await load_fixture(seeds, db_session)
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_exchange() -> MockExchange:
     return MockExchange()
 
@@ -58,7 +54,6 @@ async def _load_queue(
     correlation_id,
     mock_exchange: MockExchange,
 ):
-
     queue = MockQueue(deque())
 
     if predefined_queue is not None:

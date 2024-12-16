@@ -99,7 +99,8 @@ class MockMessage:
         return MockMessageProcess()
 
 
-class MockExchange(AsyncMock): ...
+class MockExchange(AsyncMock):
+    pass
 
 
 class MockExchangeMessage(aio_pika.Message):

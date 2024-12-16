@@ -1,16 +1,14 @@
-import logging
-import json
 import ast
-import subprocess
-import os
 import asyncio
-import uuid
+import json
+import logging
+import os
 import re
+import subprocess
+import uuid
 from datetime import datetime
 
-from mypy.semanal_main import core_modules
-
-from consumer.logger import logger, LOGGING_CONFIG
+from consumer.logger import LOGGING_CONFIG, logger
 from db.model.task import Task
 from src.metrics_init import measure_time
 
@@ -89,7 +87,7 @@ print(result)
         proc.kill()
         logger.info("user's code is running more than 3 seconds")
         return 'Execution timed out', f'Process was killed after {timeout} seconds.'
-    except Exception as e:
+    except Exception as e: # noqa
         logger.error(e)
 
     if os.path.exists(script_path):
@@ -102,45 +100,47 @@ print(result)
 async def check_user_task_solution(user_code: str, task: Task) -> str:
     func_name = extract_function_name(user_code)
     if not func_name:
-        return "Ошибка: Функция не найдена в коде."
+        return 'Ошибка: Функция не найдена в коде.'
 
     input_data = json.loads(task.get('input_data'))
     correct_answers = json.loads(task.get('correct_answer'))
 
     if input_data is None or correct_answers is None:
         logger.error(
-            f'[{datetime.now()}] Not exist input data or correct answers!!! '
-            f'TASK ID: {task.get("id")}\n USER ANSWER: {user_code}'
+            '[%s] Not exist input data or correct answers!!! TASK ID: %s\n USER ANSWER: %s',  # Исправлено
+            datetime.now(), task.get('id'), user_code
         )
         return 'Технические шоколадки. Попробуйте позже!'
 
-    test_count = 0
-    for test_args, expected_output in zip(input_data, correct_answers):
-        test_count += 1
+    for test_count, (test_args, expected_output) in enumerate(zip(input_data, correct_answers), start=1):
         result, err = await run_user_function(user_code, func_name, tuple(test_args))
         if err:
             cleaned_message = clean_error_message(err)
             return f'<b>Ваш код выдал ошибку</b>:\n{cleaned_message}'
         elif str(result) != str(expected_output):
-            return f"Решение неверное!❌\nТест №{test_count}: Аргументы: {', '.join(str(arg) for arg in test_args)}\nПравильный ответ: {expected_output}.\nВаш ответ: {result}"
+            return (
+                f'Решение неверное!❌\nТест №{test_count}: Аргументы: {", ".join(str(arg) for arg in test_args)}\n'
+                f'Правильный ответ: {expected_output}.\nВаш ответ: {result}'
+            )
 
     secret_input = json.loads(task.get('secret_input'))
     secret_answers = json.loads(task.get('secret_answer'))
 
     if secret_answers is None or secret_input is None:
         logger.error(
-            f'[{datetime.now()}] Not exist secret answers or secret input!!! '
-            f'TASK ID: {task.get("id")}\n USER ANSWER: {user_code}'
+            '[%s] Not exist secret answers or secret input!!! TASK ID: %s\n USER ANSWER: %s',  # Исправлено
+            datetime.now(), task.get('id'), user_code
         )
         return 'Технические шоколадки. Попробуйте позже!'
 
-    for test_args, expected_output_secret in zip(secret_input, secret_answers):
-        test_count += 1
+    for test_count, (test_args, expected_output_secret) in enumerate(
+        zip(secret_input, secret_answers), start=len(input_data) + 1
+    ):
         result_secret, err = await run_user_function(user_code, func_name, tuple(test_args))
         if err:
             cleaned_message = clean_error_message(err)
             return f'<b>Ваш код выдал ошибку</b>:\n{cleaned_message}'
         elif str(result_secret) != str(expected_output_secret):
-            return f"Решение неверное ❌\nТест №{test_count}: Попробуйте еще раз!"
+            return f'Решение неверное ❌\nТест №{test_count}: Попробуйте еще раз!'
 
-    return f"Решение верное! Поздравляю! Вы прошли 100% тестов! 🎉"
+    return 'Решение верное! Поздравляю! Вы прошли 100% тестов! 🎉'

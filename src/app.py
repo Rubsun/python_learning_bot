@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import AsyncGenerator
 
 import uvicorn
-from aiogram import Dispatcher, Bot
+from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 from fastapi import FastAPI
 from starlette_context import plugins
@@ -15,6 +15,7 @@ from starlette_context.middleware import RawContextMiddleware
 from config.settings import settings
 from db.storage.db import async_session
 from db.storage.redis import setup_redis
+from src.api.tech.router import router as tech_router
 from src.api.tg.router import router as tg_router
 from src.bg_task import background_tasks
 from src.bot import setup_bot, setup_dp
@@ -23,7 +24,6 @@ from src.handlers.admin_handlers.state_handlers.router import router as admin_st
 from src.handlers.user_handlers.callback.router import router as user_callback_router
 from src.handlers.user_handlers.command.router import router as user_command_start_router
 from src.handlers.user_handlers.state_handlers.router import router as user_state_router
-from src.api.tech.router import router as tech_router
 from src.logger import LOGGING_CONFIG, logger
 from src.middlewares.rps_middleware import RequestCountMiddleware
 from src.rabbit_initializer import init_rabbitmq
@@ -49,7 +49,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await bot.set_webhook(settings.BOT_WEBHOOK_URL)
 
     temp = await bot.get_webhook_info()
-    logger.info(f'WEBHOOK: {temp}')
     logger.info('Finished start')
     yield
 
@@ -66,11 +65,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.warning('not all background tasks are done')
 
     logger.info('closed background tasks...')
-    logger.info(f'[{datetime.now()}]  background tasks: {[i for i in background_tasks]}')
+    logger.info('[%s] background tasks: %s', datetime.now(), list(background_tasks))
     await bot.delete_webhook()
     logger.info('delete webhook...')
     temp = await bot.get_webhook_info()
-    logger.info(f'WEBHOOK: {temp}')
+    logger.info('WEBHOOK: %s', temp)
     logger.info('Ending lifespan')
 
 
@@ -78,7 +77,7 @@ def create_app() -> FastAPI:
     app = FastAPI(docs_url='/swagger', lifespan=lifespan)
     app.include_router(tg_router, prefix='/tg', tags=['tg'])
     app.include_router(tech_router, prefix='/tech', tags=['tech'])
-    app.middleware("http")(RequestCountMiddleware())
+    app.middleware('http')(RequestCountMiddleware())
     app.add_middleware(RawContextMiddleware, plugins=[plugins.CorrelationIdPlugin()])
     return app
 

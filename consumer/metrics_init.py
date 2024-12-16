@@ -1,7 +1,7 @@
 import time
 from functools import wraps
 
-from prometheus_client import Counter, Histogram, CollectorRegistry
+from prometheus_client import CollectorRegistry, Counter, Histogram
 
 registry = CollectorRegistry()
 

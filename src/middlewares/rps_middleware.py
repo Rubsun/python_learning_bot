@@ -1,5 +1,6 @@
-from src.metrics_init import REQUESTS_TOTAL
 from fastapi import Request
+
+from src.metrics_init import REQUESTS_TOTAL
 
 
 class RequestCountMiddleware:

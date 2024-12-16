@@ -3,11 +3,11 @@ import msgpack
 from aio_pika import ExchangeType
 from aiogram import F
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import CallbackQuery, Message
+from router import router
 
 from consumer.schema.task import TaskMessage
 from db.storage.rabbit import channel_pool
-from router import router
 from src.keyboards.user_kb import complex_kb
 
 
@@ -19,8 +19,8 @@ async def delete_task(message: Message):
 @router.callback_query(F.data.startswith('complexity_'))
 async def get_complexity(callback: CallbackQuery):
     complexity = callback.data.split('_')[-1]
-    async with channel_pool.acquire() as channel:  # type: aio_pika.Channel
-        exchange = await channel.declare_exchange("user_tasks", ExchangeType.TOPIC, durable=True)
+    async with channel_pool.acquire() as channel:
+        exchange = await channel.declare_exchange('user_tasks', ExchangeType.TOPIC, durable=True)
 
         await exchange.publish(
             aio_pika.Message(
@@ -30,9 +30,5 @@ async def get_complexity(callback: CallbackQuery):
                     )
                 ),
             ),
-            # settings.USER_TASK_QUEUE_TEMPLATE.format(
-            #     user_id=callback.from_user.id,
             'user_messages',
         )
-
-        # TODO

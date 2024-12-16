@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, User
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, User
 
 from src.handlers.user_handlers.callback.task_callback import send_answer
 from src.states.task_answer import TaskAnswerState

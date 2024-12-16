@@ -1,0 +1,28 @@
+[flake8]
+max-line-length = 120
+no-accept-encodings = True
+exclude =
+    .git,
+    .venv,
+    .mypy_cache,
+    .pytest_cache,
+    __pycache__,
+    venv,
+    external_integration,
+    backend_utils,
+    pypoetry,
+    alembic
+
+# Ignoring:
+# E203: white space before ':'. Because it's not black compatible
+# E501: Line too long. Because we use soft line limit B950
+# W503: Line break occurred before a binary operator. Because black
+# W505: Maximum doc-string length. Because it's not black compatible
+# B008: Do not perform function calls in argument defaults. Because FastAPI
+# G200: Logging exception. Because sometime its needed
+# PIE781: PIE781: assign-and-return. Because it's too noisy
+ignore = E203,E501,W503,W505,B008,G200,PIE781,EXE002
+select = C,E,F,G,I,P,S,W,Q,T,B,B950
+per-file-ignores = __init__.py:F401
+
+[isort]
