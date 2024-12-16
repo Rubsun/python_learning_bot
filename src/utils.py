@@ -119,7 +119,7 @@ async def check_user_task_solution(user_code: str, task: Task) -> str:
             return f'<b>Ваш код выдал ошибку</b>:\n{cleaned_message}'
         elif str(result) != str(expected_output):
             return (
-                f'Решение неверное!❌\nТест №{test_count}: Аргументы: {", ".join(str(arg) for arg in test_args)}\n'
+                f'Решение неверное!❌\nТест №{test_count}:\nАргументы: {", ".join(str(arg) for arg in test_args)}\n'
                 f'Правильный ответ: {expected_output}.\nВаш ответ: {result}'
             )
 
