@@ -20,6 +20,7 @@
 
 
 ###  📂 Структура проекта
+```
 python_learning_bot/  
 ├── alembic/                          # Миграции базы данных  
 ├── config/                          # Конфигурации  
@@ -73,9 +74,7 @@ python_learning_bot/
 ├── pyproject.toml                    # Конфигурация Poetry  
 ├── README.md                         # Файл с описанием проекта  
 ├── test_tasks.ddl                    # DDL для тестовых задач  
-
-
-
+```
 
 
 ## 🏃💨 Running
